@@ -1,0 +1,17 @@
+{
+  "name": "philips-hue",
+  "version": "1.0.0",
+  "private": true,
+  "main": "electron/dist/main.js",
+  "workspaces": ["server", "client", "electron"],
+  "scripts": {
+    "dev": "concurrently -n server,client,electron -c cyan,green,magenta \"npm run dev -w server\" \"npm run dev -w client\" \"wait-on http://localhost:8766 && npm run dev -w electron\"",
+    "build": "npm run build -w server && npm run build -w client && npm run build -w electron",
+    "dist": "npm run build && electron-builder --config electron-builder.config.json"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "wait-on": "^8.0.0",
+    "electron-builder": "^25.0.0"
+  }
+}

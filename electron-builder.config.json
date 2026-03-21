@@ -1,0 +1,12 @@
+{
+  "appId": "com.local.philips-hue-controller",
+  "productName": "Philips Hue Controller",
+  "directories": { "output": "dist-app" },
+  "files": ["electron/dist/**/*", "node_modules/**/*"],
+  "extraResources": [
+    { "from": "server/dist", "to": "server/dist" },
+    { "from": "client/dist", "to": "client/dist" }
+  ],
+  "mac": { "icon": "assets/icon.icns", "target": "dmg", "category": "public.app-category.utilities" },
+  "asar": true
+}

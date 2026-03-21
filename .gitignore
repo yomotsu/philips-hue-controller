@@ -1,0 +1,5 @@
+bridge-config.json
+node_modules/
+dist/
+electron/dist/
+dist-app/
