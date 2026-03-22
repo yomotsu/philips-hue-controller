@@ -1,10 +1,21 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLights } from "../../hooks/useLights";
 import { LightCard } from "./LightCard";
 
 export function Dashboard() {
   const { lights, rooms, loading, error, toggle, toggleRoomById, turnAllOff, refresh, togglingIds, togglingRoomIds, allOff } = useLights();
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+  const switchRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  function handleSwitchKeyDown(e: React.KeyboardEvent, index: number) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      switchRefs.current[index + 1]?.focus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      switchRefs.current[index - 1]?.focus();
+    }
+  }
 
   const lightMap = new Map(lights.map((l) => [l.id, l]));
   const assignedIds = new Set(rooms.flatMap((r) => r.lightIds));
@@ -55,6 +66,8 @@ export function Dashboard() {
           </div>
         </div>
         <button
+          ref={(el) => { switchRefs.current[0] = el; }}
+          onKeyDown={(e) => handleSwitchKeyDown(e, 0)}
           onClick={turnAllOff}
           disabled={allOff || loading}
           className="w-full px-4 py-2 rounded-lg bg-[#2a2a4a] text-[#e0e0e0] font-bold text-sm cursor-pointer hover:opacity-85 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity whitespace-nowrap"
@@ -67,7 +80,7 @@ export function Dashboard() {
         <p className="text-gray-500 text-center py-10">ライトを取得中...</p>
       ) : (
         <>
-          {rooms.map((room) => {
+          {rooms.map((room, index) => {
             const roomLights = room.lightIds
               .map((id) => lightMap.get(id))
               .filter((l): l is NonNullable<typeof l> => l != null);
@@ -87,9 +100,11 @@ export function Dashboard() {
                     </span>
                   </button>
                   <button
-                    onClick={() => toggleRoomById(room.id)}
-                    disabled={togglingRoomIds.has(room.id)}
-                    className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 ${
+                    ref={(el) => { switchRefs.current[index + 1] = el; }}
+                    onClick={() => { if (!togglingRoomIds.has(room.id)) toggleRoomById(room.id); }}
+                    onKeyDown={(e) => handleSwitchKeyDown(e, index + 1)}
+                    aria-disabled={togglingRoomIds.has(room.id)}
+                    className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer aria-disabled:opacity-40 aria-disabled:cursor-not-allowed flex-shrink-0 ${
                       room.anyOn ? "bg-[#f0c040]" : "bg-[#444] ring-1 ring-[#666]"
                     }`}
                   >
