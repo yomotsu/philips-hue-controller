@@ -65,3 +65,7 @@ export function toggleLight(id: string): Promise<{ on: boolean }> {
     method: "PUT",
   });
 }
+
+export function allLightsOff(): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>("/api/lights/all-off", { method: "PUT" });
+}

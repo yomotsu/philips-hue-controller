@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog } from "electron";
+import { app, BrowserWindow, dialog, screen } from "electron";
 import { join } from "path";
 
 function startServer(): void {
@@ -20,9 +20,17 @@ function startServer(): void {
 }
 
 function createWindow(): void {
+  const { width: sw, height: sh } = screen.getPrimaryDisplay().workAreaSize;
+  const width = 250;
+  const height = 800;
   const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width,
+    height,
+    x: sw - width,
+    y: Math.round((sh - height) / 2),
+    transparent: true,
+    vibrancy: "under-window",
+    visualEffectState: "active",
     webPreferences: { nodeIntegration: false, contextIsolation: true },
     title: "Philips Hue Controller",
   });

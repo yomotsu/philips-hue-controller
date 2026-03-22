@@ -3,6 +3,7 @@ export interface Light {
   name: string;
   on: boolean;
   reachable: boolean;
+  archetype?: string;
 }
 
 export interface Room {

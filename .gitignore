@@ -3,3 +3,4 @@ node_modules/
 dist/
 electron/dist/
 dist-app/
+client/public/hass-hue-icons/

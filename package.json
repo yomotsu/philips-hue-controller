@@ -5,9 +5,12 @@
   "main": "electron/dist/main.js",
   "workspaces": ["server", "client", "electron"],
   "scripts": {
+    "sync-icons": "node scripts/sync-hue-icons.mjs",
+    "postinstall": "node scripts/sync-hue-icons.mjs",
+    "dev:web": "concurrently -n server,client,browser -c cyan,green,blue \"npm run dev -w server\" \"npm run dev -w client\" \"wait-on http://localhost:8766 && open http://localhost:8766\"",
     "dev": "concurrently -n server,client,electron -c cyan,green,magenta \"npm run dev -w server\" \"npm run dev -w client\" \"wait-on http://localhost:8766 && npm run dev -w electron\"",
-    "build": "npm run build -w server && npm run build -w client && npm run build -w electron",
-    "dist": "npm run build && electron-builder --config electron-builder.config.json"
+    "build": "npm run build -w server && npm run build -w client && npm run build -w electron && electron-builder --config electron-builder.config.json",
+    "dist": "npm run build"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

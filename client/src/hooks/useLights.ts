@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Light, Room } from "../types";
-import { getLights, getRooms, toggleLight, toggleRoom } from "../api";
+import { getLights, getRooms, toggleLight, toggleRoom, allLightsOff } from "../api";
 
 export function useLights() {
   const [lights, setLights] = useState<Light[]>([]);
@@ -9,6 +9,7 @@ export function useLights() {
   const [error, setError] = useState<string | null>(null);
   const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
   const [togglingRoomIds, setTogglingRoomIds] = useState<Set<string>>(new Set());
+  const [allOff, setAllOff] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -74,5 +75,16 @@ export function useLights() {
     }
   }
 
-  return { lights, rooms, loading, error, toggle, toggleRoomById, refresh: load, togglingIds, togglingRoomIds };
+  async function turnAllOff() {
+    setAllOff(true);
+    try {
+      await allLightsOff();
+      setLights((prev) => prev.map((l) => ({ ...l, on: false })));
+      setRooms((prev) => prev.map((r) => ({ ...r, anyOn: false })));
+    } finally {
+      setAllOff(false);
+    }
+  }
+
+  return { lights, rooms, loading, error, toggle, toggleRoomById, turnAllOff, refresh: load, togglingIds, togglingRoomIds, allOff };
 }

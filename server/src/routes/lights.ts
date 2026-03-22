@@ -11,6 +11,7 @@ interface HueLightState {
 interface HueLight {
   name: string;
   state: HueLightState;
+  config?: { archetype?: string };
 }
 
 function getConfig(res: Response): ReturnType<typeof loadConfig> {
@@ -37,6 +38,7 @@ router.get("/", async (_req: Request, res: Response) => {
       name: light.name,
       on: light.state.on,
       reachable: light.state.reachable,
+      archetype: light.config?.archetype,
     }));
     res.json(lights);
   } catch {
@@ -66,6 +68,26 @@ router.put("/:id/toggle", async (req: Request, res: Response) => {
     res.json({ on: newOn });
   } catch {
     res.status(500).json({ error: "Failed to toggle light" });
+  }
+});
+
+router.put("/all-off", async (_req: Request, res: Response) => {
+  const config = getConfig(res);
+  if (!config) return;
+
+  try {
+    await fetch(
+      `http://${config.bridgeIp}/api/${config.username}/groups/0/action`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ on: false }),
+        signal: AbortSignal.timeout(5000),
+      }
+    );
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "Failed to turn off all lights" });
   }
 });
 

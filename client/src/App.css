@@ -2,9 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .icon-on {
+    filter: invert(86%) sepia(42%) saturate(728%) hue-rotate(356deg) brightness(103%);
+  }
+  .icon-off {
+    filter: grayscale(1) brightness(0.7);
+  }
+}
+
 @layer base {
   body {
-    @apply bg-[#1a1a2e] text-[#e0e0e0] min-h-screen font-sans;
+    @apply bg-[#1a1a2e]/80 text-[#e0e0e0] min-h-screen font-sans;
   }
   /* details/summary の triangle を非表示にして独自実装 */
   details > summary {
