@@ -3,7 +3,7 @@ import { useLights } from "../../hooks/useLights";
 import { LightCard } from "./LightCard";
 
 export function Dashboard() {
-  const { lights, rooms, loading, error, toggle, toggleRoomById, turnAllOff, refresh, togglingIds, togglingRoomIds, allOff } = useLights();
+  const { lights, rooms, loading, error, toggle, toggleRoomById, turnAllOff, turnGoodnightOff, refresh, togglingIds, togglingRoomIds, allOff, goodnight } = useLights();
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const switchRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -65,15 +65,29 @@ export function Dashboard() {
             </button>
           </div>
         </div>
-        <button
-          ref={(el) => { switchRefs.current[0] = el; }}
-          onKeyDown={(e) => handleSwitchKeyDown(e, 0)}
-          onClick={turnAllOff}
-          disabled={allOff || loading}
-          className="w-full px-4 py-2 rounded-lg bg-[#2a2a4a] text-[#e0e0e0] font-bold text-sm cursor-pointer hover:opacity-85 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity whitespace-nowrap"
-        >
-          {allOff ? "..." : "全OFF"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            ref={(el) => { switchRefs.current[0] = el; }}
+            onKeyDown={(e) => handleSwitchKeyDown(e, 0)}
+            onClick={turnAllOff}
+            disabled={allOff || loading}
+            className="flex-1 px-4 py-2 rounded-lg bg-[#2a2a4a] text-[#e0e0e0] font-bold text-sm cursor-pointer hover:opacity-85 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity whitespace-nowrap"
+          >
+            {allOff ? "..." : "全OFF"}
+          </button>
+          <button
+            onClick={turnGoodnightOff}
+            disabled={goodnight || loading}
+            title="おやすみ（BEDROOM以外をOFF）"
+            className="px-3 py-2 rounded-lg bg-[#2a2a4a] text-[#e0e0e0] cursor-pointer hover:opacity-85 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+          >
+            {goodnight ? "..." : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+              </svg>
+            )}
+          </button>
+        </div>
       </header>
       {error && <p className="mb-4 text-red-500 text-sm">{error}</p>}
       {loading && lights.length === 0 ? (

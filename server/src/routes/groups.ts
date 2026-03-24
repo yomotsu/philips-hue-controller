@@ -36,6 +36,37 @@ router.get("/", async (_req: Request, res: Response) => {
   }
 });
 
+router.put("/goodnight", async (_req: Request, res: Response) => {
+  const config = loadConfig();
+  if (!config) {
+    res.status(401).json({ error: "Bridge not configured" });
+    return;
+  }
+  try {
+    const response = await fetch(
+      `http://${config.bridgeIp}/api/${config.username}/groups`,
+      { signal: AbortSignal.timeout(5000) }
+    );
+    const data = (await response.json()) as Record<string, HueGroup>;
+    const targets = Object.entries(data).filter(
+      ([, g]) => g.type === "Room" && g.name.toUpperCase() !== "BEDROOM" && g.state.any_on
+    );
+    await Promise.all(
+      targets.map(([id]) =>
+        fetch(`http://${config.bridgeIp}/api/${config.username}/groups/${id}/action`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ on: false }),
+          signal: AbortSignal.timeout(5000),
+        })
+      )
+    );
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "Failed to sleep" });
+  }
+});
+
 router.put("/:id/toggle", async (req: Request, res: Response) => {
   const config = loadConfig();
   if (!config) {

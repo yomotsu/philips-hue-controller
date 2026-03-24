@@ -69,3 +69,7 @@ export function toggleLight(id: string): Promise<{ on: boolean }> {
 export function allLightsOff(): Promise<{ ok: boolean }> {
   return request<{ ok: boolean }>("/api/lights/all-off", { method: "PUT" });
 }
+
+export function goodnightOff(): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>("/api/groups/goodnight", { method: "PUT" });
+}

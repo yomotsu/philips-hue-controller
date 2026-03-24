@@ -8,6 +8,7 @@ const clients = new Set<Response>();
 let bridgeReq: ReturnType<typeof https.request> | null = null;
 let reconnectTimer: NodeJS.Timeout | null = null;
 let reconnectDelay = 1000;
+let zombieCheckTimer: NodeJS.Timeout | null = null;
 
 function broadcast(data: string) {
   for (const client of clients) {
@@ -84,6 +85,22 @@ function disconnectFromBridge() {
   }
 }
 
+function startZombieCheck() {
+  if (zombieCheckTimer) return;
+  zombieCheckTimer = setInterval(() => {
+    for (const client of clients) {
+      if (client.writableEnded || client.destroyed) {
+        clients.delete(client);
+      }
+    }
+    if (clients.size === 0) {
+      clearInterval(zombieCheckTimer!);
+      zombieCheckTimer = null;
+      disconnectFromBridge();
+    }
+  }, 60 * 60 * 1000);
+}
+
 router.get("/", (_req: Request, res: Response) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -94,11 +111,14 @@ router.get("/", (_req: Request, res: Response) => {
 
   if (clients.size === 1) {
     connectToBridge();
+    startZombieCheck();
   }
 
   _req.on("close", () => {
     clients.delete(res);
     if (clients.size === 0) {
+      clearInterval(zombieCheckTimer!);
+      zombieCheckTimer = null;
       disconnectFromBridge();
     }
   });

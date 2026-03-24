@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Light, Room } from "../types";
-import { getLights, getRooms, toggleLight, toggleRoom, allLightsOff } from "../api";
+import { getLights, getRooms, toggleLight, toggleRoom, allLightsOff, goodnightOff } from "../api";
 
 interface HueEventItem {
   type: string;
@@ -21,6 +21,7 @@ export function useLights() {
   const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
   const [togglingRoomIds, setTogglingRoomIds] = useState<Set<string>>(new Set());
   const [allOff, setAllOff] = useState(false);
+  const [goodnight, setGoodnight] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -149,5 +150,25 @@ export function useLights() {
     }
   }
 
-  return { lights, rooms, loading, error, toggle, toggleRoomById, turnAllOff, refresh: load, togglingIds, togglingRoomIds, allOff };
+  async function turnGoodnightOff() {
+    setGoodnight(true);
+    try {
+      await goodnightOff();
+      setRooms((prev) =>
+        prev.map((r) =>
+          r.name.toUpperCase() !== "BEDROOM" ? { ...r, anyOn: false } : r
+        )
+      );
+      setLights((prev) => {
+        const bedroomIds = new Set(
+          rooms.filter((r) => r.name.toUpperCase() === "BEDROOM").flatMap((r) => r.lightIds)
+        );
+        return prev.map((l) => (bedroomIds.has(l.id) ? l : { ...l, on: false }));
+      });
+    } finally {
+      setGoodnight(false);
+    }
+  }
+
+  return { lights, rooms, loading, error, toggle, toggleRoomById, turnAllOff, turnGoodnightOff, refresh: load, togglingIds, togglingRoomIds, allOff, goodnight };
 }
