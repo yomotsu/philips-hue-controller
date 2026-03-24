@@ -50,9 +50,11 @@ function connectToBridge() {
         buffer = parts.pop() ?? "";
 
         for (const part of parts) {
-          const line = part.trim();
-          if (line.startsWith("data: ")) {
-            broadcast(line.slice(6));
+          for (const line of part.split("\n")) {
+            if (line.startsWith("data: ")) {
+              broadcast(line.slice(6));
+              break;
+            }
           }
         }
       });
