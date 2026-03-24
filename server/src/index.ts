@@ -4,6 +4,7 @@ import { join } from "path";
 import bridgeRouter from "./routes/bridge";
 import lightsRouter from "./routes/lights";
 import groupsRouter from "./routes/groups";
+import eventsRouter from "./routes/events";
 
 const app = express();
 const PORT = 8765;
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use("/api/bridge", bridgeRouter);
 app.use("/api/lights", lightsRouter);
 app.use("/api/groups", groupsRouter);
+app.use("/api/events", eventsRouter);
 
 if (isProd) {
   const clientDist = process.env.CLIENT_DIST ?? join(__dirname, "../../client/dist");

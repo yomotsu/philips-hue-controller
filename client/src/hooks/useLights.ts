@@ -2,6 +2,17 @@ import { useState, useEffect, useCallback } from "react";
 import type { Light, Room } from "../types";
 import { getLights, getRooms, toggleLight, toggleRoom, allLightsOff } from "../api";
 
+interface HueEventItem {
+  type: string;
+  id_v1?: string;
+  on?: { on: boolean };
+}
+
+interface HueEvent {
+  type: string;
+  data: HueEventItem[];
+}
+
 export function useLights() {
   const [lights, setLights] = useState<Light[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -27,6 +38,58 @@ export function useLights() {
 
   useEffect(() => {
     load();
+  }, [load]);
+
+  useEffect(() => {
+    const es = new EventSource("/api/events");
+
+    es.onmessage = (event) => {
+      try {
+        const updates = JSON.parse(event.data as string) as HueEvent[];
+        for (const update of updates) {
+          if (update.type !== "update") continue;
+          for (const item of update.data) {
+            if (item.type === "light" && item.id_v1 && item.on !== undefined) {
+              const lightId = item.id_v1.replace("/lights/", "");
+              const newOn = item.on.on;
+              setLights((prev) => {
+                const updated = prev.map((l) =>
+                  l.id === lightId ? { ...l, on: newOn } : l
+                );
+                setRooms((prevRooms) =>
+                  prevRooms.map((r) => ({
+                    ...r,
+                    anyOn: r.lightIds.some(
+                      (id) => updated.find((l) => l.id === id)?.on ?? false
+                    ),
+                  }))
+                );
+                return updated;
+              });
+            }
+          }
+        }
+      } catch {
+        // ignore parse errors
+      }
+    };
+
+    return () => es.close();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const handleFocus = () => load();
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") load();
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [load]);
 
   async function toggle(id: string) {
