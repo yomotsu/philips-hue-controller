@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, Fragment } from "react";
 import { useLights } from "../../hooks/useLights";
 import { LightCard } from "./LightCard";
 
@@ -8,6 +8,7 @@ export function Dashboard() {
   const switchRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const dragHandleRef = useRef<string | null>(null);
 
   function handleSwitchKeyDown(e: React.KeyboardEvent, index: number) {
     if (e.key === "ArrowDown") {
@@ -47,8 +48,8 @@ export function Dashboard() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
-      <header className="mb-7">
+    <div className="max-w-2xl mx-auto py-4">
+      <header className="mb-4 px-4">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-3">
           <div />
           <h1 className="text-2xl font-bold text-[#f0c040] whitespace-nowrap">Philips Hue</h1>
@@ -95,7 +96,24 @@ export function Dashboard() {
       {loading && lights.length === 0 ? (
         <p className="text-gray-500 text-center py-10">ライトを取得中...</p>
       ) : (
-        <>
+        <div
+          className="pl-2 pr-4"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={() => {
+            if (!dragId || !dragOverId) { setDragId(null); setDragOverId(null); return; }
+            const ids = rooms.map((r) => r.id);
+            const from = ids.indexOf(dragId);
+            const to = ids.indexOf(dragOverId);
+            if (from !== to) {
+              const next = [...ids];
+              next.splice(from, 1);
+              next.splice(to, 0, dragId);
+              reorderRooms(next);
+            }
+            setDragId(null);
+            setDragOverId(null);
+          }}
+        >
           {rooms.map((room, index) => {
             const roomLights = room.lightIds
               .map((id) => lightMap.get(id))
@@ -104,30 +122,35 @@ export function Dashboard() {
             const isDragging = dragId === room.id;
             const isOver = dragOverId === room.id && dragId !== room.id;
             return (
+              <Fragment key={room.id}>
+                <div className={`h-0.5 rounded-full transition-colors ${isOver ? "bg-[#f0c040]" : "bg-transparent"}`} />
               <section
-                key={room.id}
                 draggable
-                onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDragId(room.id); }}
-                onDragOver={(e) => { e.preventDefault(); setDragOverId(room.id); }}
-                onDragLeave={() => setDragOverId(null)}
-                onDrop={() => {
-                  if (!dragId || dragId === room.id) return;
-                  const ids = rooms.map((r) => r.id);
-                  const from = ids.indexOf(dragId);
-                  const to = ids.indexOf(room.id);
-                  const next = [...ids];
-                  next.splice(from, 1);
-                  next.splice(to, 0, dragId);
-                  reorderRooms(next);
-                  setDragId(null);
-                  setDragOverId(null);
+                onDragStart={(e) => { if (dragHandleRef.current !== room.id) { e.preventDefault(); return; } e.dataTransfer.effectAllowed = "move"; setDragId(room.id); }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const relY = e.clientY - rect.top;
+                  if (relY <= 25) {
+                    if (room.id !== dragId) setDragOverId(room.id);
+                  } else if (relY >= rect.height - 25) {
+                    const next = rooms[index + 1];
+                    if (next && next.id !== dragId) setDragOverId(next.id);
+                    else setDragOverId(null);
+                  } else {
+                    setDragOverId(null);
+                  }
                 }}
-                onDragEnd={() => { setDragId(null); setDragOverId(null); }}
-                className={`mb-6 transition-opacity ${isDragging ? "opacity-40" : "opacity-100"} ${isOver ? "border-t-2 border-[#f0c040]" : "border-t-2 border-transparent"}`}
+onDragEnd={() => { dragHandleRef.current = null; setDragId(null); setDragOverId(null); }}
+                className={`group my-1.5 transition-opacity ${isDragging ? "opacity-40" : "opacity-100"}`}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-[#555] hover:text-[#888] cursor-grab active:cursor-grabbing flex-shrink-0 px-0.5">
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span
+                      className="text-[#444] group-hover:text-white cursor-grab active:cursor-grabbing flex-shrink-0 pl-0.5 transition-colors"
+                      onMouseDown={() => { dragHandleRef.current = room.id; }}
+                      onMouseUp={() => { dragHandleRef.current = null; }}
+                    >
                       <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
                         <circle cx="3" cy="2.5" r="1.2"/><circle cx="3" cy="7" r="1.2"/><circle cx="3" cy="11.5" r="1.2"/>
                         <circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/>
@@ -161,6 +184,7 @@ export function Dashboard() {
                 </div>
                 {renderRoomLights(room.id, roomLights)}
               </section>
+              </Fragment>
             );
           })}
           {unassigned.length > 0 && (
@@ -179,7 +203,7 @@ export function Dashboard() {
               {renderRoomLights("__unassigned__", unassigned)}
             </section>
           )}
-        </>
+        </div>
       )}
     </div>
   );
