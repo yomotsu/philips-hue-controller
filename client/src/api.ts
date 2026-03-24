@@ -70,6 +70,14 @@ export function allLightsOff(): Promise<{ ok: boolean }> {
   return request<{ ok: boolean }>("/api/lights/all-off", { method: "PUT" });
 }
 
+export function saveRoomOrder(ids: string[]): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>("/api/groups/order", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+}
+
 export function goodnightOff(): Promise<{ ok: boolean }> {
   return request<{ ok: boolean }>("/api/groups/goodnight", { method: "PUT" });
 }

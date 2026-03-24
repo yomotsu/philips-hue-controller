@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Light, Room } from "../types";
-import { getLights, getRooms, toggleLight, toggleRoom, allLightsOff, goodnightOff } from "../api";
+import { getLights, getRooms, toggleLight, toggleRoom, allLightsOff, goodnightOff, saveRoomOrder } from "../api";
 
 interface HueEventItem {
   type: string;
@@ -170,5 +170,13 @@ export function useLights() {
     }
   }
 
-  return { lights, rooms, loading, error, toggle, toggleRoomById, turnAllOff, turnGoodnightOff, refresh: load, togglingIds, togglingRoomIds, allOff, goodnight };
+  async function reorderRooms(ids: string[]) {
+    setRooms((prev) => {
+      const map = new Map(prev.map((r) => [r.id, r]));
+      return ids.map((id) => map.get(id)).filter((r): r is NonNullable<typeof r> => r != null);
+    });
+    await saveRoomOrder(ids);
+  }
+
+  return { lights, rooms, loading, error, toggle, toggleRoomById, turnAllOff, turnGoodnightOff, reorderRooms, refresh: load, togglingIds, togglingRoomIds, allOff, goodnight };
 }

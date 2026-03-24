@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { loadConfig } from "../config";
+import { loadPreferences, savePreferences } from "../preferences";
 
 const router = Router();
 
@@ -30,10 +31,25 @@ router.get("/", async (_req: Request, res: Response) => {
         lightIds: g.lights,
         anyOn: g.state.any_on,
       }));
-    res.json(rooms);
+    const { roomOrder = [] } = loadPreferences();
+    const ordered = [
+      ...roomOrder.map((id) => rooms.find((r) => r.id === id)).filter((r): r is NonNullable<typeof r> => r != null),
+      ...rooms.filter((r) => !roomOrder.includes(r.id)),
+    ];
+    res.json(ordered);
   } catch {
     res.status(500).json({ error: "Failed to fetch groups" });
   }
+});
+
+router.put("/order", (req: Request, res: Response) => {
+  const { ids } = req.body as { ids?: string[] };
+  if (!Array.isArray(ids)) {
+    res.status(400).json({ error: "ids must be an array" });
+    return;
+  }
+  savePreferences({ roomOrder: ids });
+  res.json({ ok: true });
 });
 
 router.put("/goodnight", async (_req: Request, res: Response) => {

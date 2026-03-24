@@ -3,9 +3,11 @@ import { useLights } from "../../hooks/useLights";
 import { LightCard } from "./LightCard";
 
 export function Dashboard() {
-  const { lights, rooms, loading, error, toggle, toggleRoomById, turnAllOff, turnGoodnightOff, refresh, togglingIds, togglingRoomIds, allOff, goodnight } = useLights();
+  const { lights, rooms, loading, error, toggle, toggleRoomById, turnAllOff, turnGoodnightOff, reorderRooms, refresh, togglingIds, togglingRoomIds, allOff, goodnight } = useLights();
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const switchRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   function handleSwitchKeyDown(e: React.KeyboardEvent, index: number) {
     if (e.key === "ArrowDown") {
@@ -99,20 +101,50 @@ export function Dashboard() {
               .map((id) => lightMap.get(id))
               .filter((l): l is NonNullable<typeof l> => l != null);
             if (roomLights.length === 0) return null;
+            const isDragging = dragId === room.id;
+            const isOver = dragOverId === room.id && dragId !== room.id;
             return (
-              <section key={room.id} className="mb-6">
+              <section
+                key={room.id}
+                draggable
+                onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDragId(room.id); }}
+                onDragOver={(e) => { e.preventDefault(); setDragOverId(room.id); }}
+                onDragLeave={() => setDragOverId(null)}
+                onDrop={() => {
+                  if (!dragId || dragId === room.id) return;
+                  const ids = rooms.map((r) => r.id);
+                  const from = ids.indexOf(dragId);
+                  const to = ids.indexOf(room.id);
+                  const next = [...ids];
+                  next.splice(from, 1);
+                  next.splice(to, 0, dragId);
+                  reorderRooms(next);
+                  setDragId(null);
+                  setDragOverId(null);
+                }}
+                onDragEnd={() => { setDragId(null); setDragOverId(null); }}
+                className={`mb-6 transition-opacity ${isDragging ? "opacity-40" : "opacity-100"} ${isOver ? "border-t-2 border-[#f0c040]" : "border-t-2 border-transparent"}`}
+              >
                 <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => toggleSection(room.id)}
-                    className="flex items-center gap-1.5 text-gray-400 hover:text-gray-200 transition-colors cursor-pointer"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform flex-shrink-0 ${openSections.has(room.id) ? "rotate-90" : ""}`}>
-                      <path d="M9 18l6-6-6-6"/>
-                    </svg>
-                    <span className="text-sm font-semibold uppercase tracking-widest">
-                      {room.name}
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-[#555] hover:text-[#888] cursor-grab active:cursor-grabbing flex-shrink-0 px-0.5">
+                      <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
+                        <circle cx="3" cy="2.5" r="1.2"/><circle cx="3" cy="7" r="1.2"/><circle cx="3" cy="11.5" r="1.2"/>
+                        <circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/>
+                      </svg>
                     </span>
-                  </button>
+                    <button
+                      onClick={() => toggleSection(room.id)}
+                      className="flex items-center gap-1.5 text-gray-400 hover:text-gray-200 transition-colors cursor-pointer min-w-0"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform flex-shrink-0 ${openSections.has(room.id) ? "rotate-90" : ""}`}>
+                        <path d="M9 18l6-6-6-6"/>
+                      </svg>
+                      <span className="text-sm font-semibold uppercase tracking-widest">
+                        {room.name}
+                      </span>
+                    </button>
+                  </div>
                   <button
                     ref={(el) => { switchRefs.current[index + 1] = el; }}
                     onClick={() => { if (!togglingRoomIds.has(room.id)) toggleRoomById(room.id); }}
