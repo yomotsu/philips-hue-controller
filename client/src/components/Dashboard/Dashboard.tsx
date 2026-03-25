@@ -66,7 +66,7 @@ export function Dashboard() {
           <h1 className="text-2xl font-bold text-[#f0c040] whitespace-nowrap">Home Controls</h1>
           <div className="flex justify-end">
             <button
-              onClick={refresh}
+              onClick={() => { refresh(); switchBot.refresh(); }}
               disabled={loading}
               className="p-1.5 rounded-lg bg-[#2a2a4a] text-[#e0e0e0] cursor-pointer hover:opacity-85 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
             >
