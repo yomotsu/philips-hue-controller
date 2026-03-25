@@ -6,6 +6,8 @@ const PREFS_PATH = join(CONFIG_DIR, "preferences.json");
 
 interface Preferences {
   roomOrder?: string[];
+  switchbotToken?: string;
+  switchbotSecret?: string;
 }
 
 export function loadPreferences(): Preferences {

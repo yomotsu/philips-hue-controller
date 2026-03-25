@@ -31,11 +31,28 @@ router.get("/", async (_req: Request, res: Response) => {
         lightIds: g.lights,
         anyOn: g.state.any_on,
       }));
-    const { roomOrder = [] } = loadPreferences();
-    const ordered = [
-      ...roomOrder.map((id) => rooms.find((r) => r.id === id)).filter((r): r is NonNullable<typeof r> => r != null),
-      ...rooms.filter((r) => !roomOrder.includes(r.id)),
+    const DEFAULT_NAME_ORDER = [
+      "entrance", "hallway", "kitchen", "counter", "living room",
+      "yellow room", "black room", "bedroom", "laundry room", "bathroom", "toilet",
     ];
+
+    const { roomOrder } = loadPreferences();
+    let ordered: typeof rooms;
+    if (roomOrder && roomOrder.length > 0) {
+      ordered = [
+        ...roomOrder.map((id) => rooms.find((r) => r.id === id)).filter((r): r is NonNullable<typeof r> => r != null),
+        ...rooms.filter((r) => !roomOrder.includes(r.id)),
+      ];
+    } else {
+      ordered = [...rooms].sort((a, b) => {
+        const ai = DEFAULT_NAME_ORDER.indexOf(a.name.toLowerCase());
+        const bi = DEFAULT_NAME_ORDER.indexOf(b.name.toLowerCase());
+        if (ai === -1 && bi === -1) return 0;
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      });
+    }
     res.json(ordered);
   } catch {
     res.status(500).json({ error: "Failed to fetch groups" });

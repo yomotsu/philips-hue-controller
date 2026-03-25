@@ -5,6 +5,7 @@ import bridgeRouter from "./routes/bridge";
 import lightsRouter from "./routes/lights";
 import groupsRouter from "./routes/groups";
 import eventsRouter from "./routes/events";
+import switchbotRouter from "./routes/switchbot";
 
 const app = express();
 const PORT = 8765;
@@ -19,6 +20,7 @@ app.use("/api/bridge", bridgeRouter);
 app.use("/api/lights", lightsRouter);
 app.use("/api/groups", groupsRouter);
 app.use("/api/events", eventsRouter);
+app.use("/api/switchbot", switchbotRouter);
 
 if (isProd) {
   const clientDist = process.env.CLIENT_DIST ?? join(__dirname, "../../client/dist");

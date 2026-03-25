@@ -9,7 +9,9 @@
     "89",
     "86",
     "90",
-    "91",
-    "85"
-  ]
+    "85",
+    "91"
+  ],
+  "switchbotToken": "64f728b196fbaed304c968dd22f822d8ab4a452d920139632ceec3bde678f9a0cc2460c0a937708397fb4aa86ad0356a",
+  "switchbotSecret": "3d11aea125e817a03e0cc9fcdd632c7f"
 }

@@ -81,3 +81,23 @@ export function saveRoomOrder(ids: string[]): Promise<{ ok: boolean }> {
 export function goodnightOff(): Promise<{ ok: boolean }> {
   return request<{ ok: boolean }>("/api/groups/goodnight", { method: "PUT" });
 }
+
+export function getSwitchBotConfig(): Promise<{ configured: boolean }> {
+  return request<{ configured: boolean }>("/api/switchbot/config");
+}
+
+export function setSwitchBotConfig(token: string, secret: string): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>("/api/switchbot/config", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, secret }),
+  });
+}
+
+export function getSwitchBotDevices(): Promise<import("./types").SwitchBotDevice[]> {
+  return request<import("./types").SwitchBotDevice[]>("/api/switchbot/devices");
+}
+
+export function toggleSwitchBot(id: string): Promise<{ on: boolean }> {
+  return request<{ on: boolean }>(`/api/switchbot/${id}/toggle`, { method: "PUT" });
+}

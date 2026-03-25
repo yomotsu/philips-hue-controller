@@ -17,3 +17,10 @@ export interface BridgeStatus {
   configured: boolean;
   bridgeIp?: string;
 }
+
+export interface SwitchBotDevice {
+  id: string;
+  name: string;
+  on: boolean;
+  type: string;
+}

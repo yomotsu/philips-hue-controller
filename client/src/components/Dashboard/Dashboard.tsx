@@ -1,9 +1,20 @@
 import { useState, useRef, Fragment } from "react";
 import { useLights } from "../../hooks/useLights";
+import { useSwitchBot } from "../../hooks/useSwitchBot";
 import { LightCard } from "./LightCard";
+import { SwitchBotSection } from "./SwitchBotSection";
 
 export function Dashboard() {
-  const { lights, rooms, loading, error, toggle, toggleRoomById, turnAllOff, turnGoodnightOff, reorderRooms, refresh, togglingIds, togglingRoomIds, allOff, goodnight } = useLights();
+  const { lights, rooms, loading, error, toggle, toggleRoomById, turnAllOff: hueAllOff, turnGoodnightOff: hueGoodnightOff, reorderRooms, refresh, togglingIds, togglingRoomIds, allOff, goodnight } = useLights();
+  const switchBot = useSwitchBot();
+
+  async function turnAllOff() {
+    await Promise.all([hueAllOff(), switchBot.turnAllOff()]);
+  }
+
+  async function turnGoodnightOff() {
+    await Promise.all([hueGoodnightOff(), switchBot.turnAllOff()]);
+  }
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const switchRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -52,7 +63,7 @@ export function Dashboard() {
       <header className="mb-4 px-4">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-3">
           <div />
-          <h1 className="text-2xl font-bold text-[#f0c040] whitespace-nowrap">Philips Hue</h1>
+          <h1 className="text-2xl font-bold text-[#f0c040] whitespace-nowrap">Home Controls</h1>
           <div className="flex justify-end">
             <button
               onClick={refresh}
@@ -73,14 +84,14 @@ export function Dashboard() {
             ref={(el) => { switchRefs.current[0] = el; }}
             onKeyDown={(e) => handleSwitchKeyDown(e, 0)}
             onClick={turnAllOff}
-            disabled={allOff || loading}
+            disabled={allOff || loading || rooms.every((r) => !r.anyOn)}
             className="flex-1 px-4 py-2 rounded-lg bg-[#2a2a4a] text-[#e0e0e0] font-bold text-sm cursor-pointer hover:opacity-85 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity whitespace-nowrap"
           >
             {allOff ? "..." : "全OFF"}
           </button>
           <button
             onClick={turnGoodnightOff}
-            disabled={goodnight || loading}
+            disabled={goodnight || loading || rooms.filter((r) => r.name.toUpperCase() !== "BEDROOM").every((r) => !r.anyOn)}
             title="おやすみ（BEDROOM以外をOFF）"
             className="px-3 py-2 rounded-lg bg-[#2a2a4a] text-[#e0e0e0] cursor-pointer hover:opacity-85 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
           >
@@ -96,6 +107,13 @@ export function Dashboard() {
       {loading && lights.length === 0 ? (
         <p className="text-gray-500 text-center py-10">ライトを取得中...</p>
       ) : (
+        <>
+        <div className="pl-2 pr-4 mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold uppercase tracking-widest text-gray-400">Philips Hue</span>
+            <div className="flex-1 h-px bg-[#2a2a4a]" />
+          </div>
+        </div>
         <div
           className="pl-2 pr-4"
           onDragOver={(e) => e.preventDefault()}
@@ -204,7 +222,16 @@ onDragEnd={() => { dragHandleRef.current = null; setDragId(null); setDragOverId(
             </section>
           )}
         </div>
+        </>
       )}
+      <SwitchBotSection
+        devices={switchBot.devices}
+        loading={switchBot.loading}
+        error={switchBot.error}
+        configured={switchBot.configured}
+        toggle={switchBot.toggle}
+        configure={switchBot.configure}
+      />
     </div>
   );
 }
